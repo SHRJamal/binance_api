@@ -1,10 +1,12 @@
+import 'package:equatable/equatable.dart';
+
 class MakerOrder {
   final double price;
   final double quantity;
 
   MakerOrder.fromList(List l)
-      : this.price = double.parse(l[0]),
-        this.quantity = double.parse(l[1]);
+      : price = double.parse(l[0] as String? ?? '0'),
+        quantity = double.parse(l[1] as String? ?? '0');
 }
 
 class OrderBook {
@@ -15,30 +17,87 @@ class OrderBook {
   final List<MakerOrder> asks;
 
   OrderBook.fromMap(Map m)
-      : this.lastUpdateId = m['lastUpdateId'],
-        this.messageOutputTime = m.containsKey('E') ? m['E'] : 0,
-        this.transactionTime = m.containsKey('T') ? m['T'] : 0,
-        this.bids = List<MakerOrder>.from(m['bids'].map((b) => MakerOrder.fromList(b))),
-        this.asks = List<MakerOrder>.from(m['asks'].map((b) => MakerOrder.fromList(b)));
+      : lastUpdateId = m['lastUpdateId'] as int? ?? 0,
+        messageOutputTime = m['E'] as int? ?? 0,
+        transactionTime = m['T'] as int? ?? 0,
+        bids = List<MakerOrder>.from(
+            (m['bids'] as List<List>).map((b) => MakerOrder.fromList(b))),
+        asks = List<MakerOrder>.from(
+            (m['asks'] as List<List>).map((b) => MakerOrder.fromList(b)));
 }
 
-class PublicTrade {
+class PublicTrade extends Equatable {
   final int id;
   final double price;
   final double qty;
   final double quoteQty;
-  final int timestamp;
+  final DateTime time;
   final bool isBuyerMaker;
   final bool isBestMatch;
+  const PublicTrade({
+    required this.id,
+    required this.price,
+    required this.qty,
+    required this.quoteQty,
+    required this.time,
+    required this.isBuyerMaker,
+    required this.isBestMatch,
+  });
 
-  PublicTrade.fromMap(Map m)
-      : this.id = m['id'],
-        this.price = double.parse(m['price']),
-        this.qty = double.parse(m['qty']),
-        this.quoteQty = double.parse(m['quoteQty']),
-        this.timestamp = m['time'],
-        this.isBuyerMaker = m['isBuyerMaker'],
-        this.isBestMatch = m.containsKey('isBestMatch') ? m['isBestMatch'] : true;
+  PublicTrade operator +(PublicTrade o) => copyWith(
+        id: id + o.id,
+        price: (price + o.price) / 2,
+        qty: qty + o.qty,
+        quoteQty: quoteQty + o.quoteQty,
+      );
+
+  PublicTrade copyWith({
+    int? id,
+    double? price,
+    double? qty,
+    double? quoteQty,
+    DateTime? time,
+    bool? isBuyerMaker,
+    bool? isBestMatch,
+  }) {
+    return PublicTrade(
+      id: id ?? this.id,
+      price: price ?? this.price,
+      qty: qty ?? this.qty,
+      quoteQty: quoteQty ?? this.quoteQty,
+      time: time ?? this.time,
+      isBuyerMaker: isBuyerMaker ?? this.isBuyerMaker,
+      isBestMatch: isBestMatch ?? this.isBestMatch,
+    );
+  }
+
+  factory PublicTrade.fromMap(Map<dynamic, dynamic> m) {
+    return PublicTrade(
+      id: m['id'] as int? ?? 0,
+      price: double.parse(m['price'] as String? ?? '0'),
+      qty: double.parse(m['qty'] as String? ?? '0'),
+      quoteQty: double.parse(m['quoteQty'] as String? ?? '0'),
+      time: DateTime.fromMillisecondsSinceEpoch(m['time'] as int),
+      isBuyerMaker: m['isBuyerMaker'] as bool? ?? false,
+      isBestMatch: m['isBestMatch'] as bool? ?? true,
+    );
+  }
+
+  @override
+  bool get stringify => true;
+
+  @override
+  List<Object> get props {
+    return [
+      id,
+      price,
+      qty,
+      quoteQty,
+      time,
+      isBuyerMaker,
+      isBestMatch,
+    ];
+  }
 }
 
 class AggregatedTrade {
@@ -52,14 +111,14 @@ class AggregatedTrade {
   final bool isBestMatch;
 
   AggregatedTrade.fromMap(Map m)
-      : this.id = m['a'],
-        this.price = double.parse(m['p']),
-        this.qty = double.parse(m['q']),
-        this.firstTradeId = m['f'],
-        this.lastTradeId = m['l'],
-        this.timestamp = m['T'],
-        this.isBuyerMaker = m['m'],
-        this.isBestMatch = m.containsKey('M') ? m['M'] : true;
+      : id = m['a'] as int? ?? 0,
+        price = double.parse(m['p'] as String? ?? '0'),
+        qty = double.parse(m['q'] as String? ?? '0'),
+        firstTradeId = m['f'] as int? ?? 0,
+        lastTradeId = m['l'] as int? ?? 0,
+        timestamp = m['T'] as int? ?? 0,
+        isBuyerMaker = m['m'] as bool? ?? true,
+        isBestMatch = m['M'] as bool? ?? true;
 }
 
 class Kline {
@@ -77,15 +136,15 @@ class Kline {
   final double takerQuote;
 
   Kline.fromList(List c)
-      : this.openTime = DateTime.fromMillisecondsSinceEpoch(c.first),
-        this.open = double.parse(c[1]),
-        this.high = double.parse(c[2]),
-        this.low = double.parse(c[3]),
-        this.close = double.parse(c[4]),
-        this.volume = double.parse(c[5]),
-        this.closeTime = c[6],
-        this.quoteVolume = double.parse(c[7]),
-        this.tradesCount = c[8],
-        this.takerBase = double.parse(c[9]),
-        this.takerQuote = double.parse(c[10]);
+      : openTime = DateTime.fromMillisecondsSinceEpoch(c.first as int? ?? 0),
+        open = double.parse(c[1] as String? ?? '0'),
+        high = double.parse(c[2] as String? ?? '0'),
+        low = double.parse(c[3] as String? ?? '0'),
+        close = double.parse(c[4] as String? ?? '0'),
+        volume = double.parse(c[5] as String? ?? '0'),
+        closeTime = c[6] as int? ?? 0,
+        tradesCount = c[8] as int? ?? 0,
+        quoteVolume = double.parse(c[7] as String? ?? '0'),
+        takerBase = double.parse(c[9] as String? ?? '0'),
+        takerQuote = double.parse(c[10] as String? ?? '0');
 }

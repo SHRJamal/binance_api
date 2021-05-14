@@ -1,9 +1,4 @@
-import 'package:flutter/material.dart';
-
-import '../commons/binance_common.dart';
-import '../commons/common_enums.dart';
-
-import 'spot_classes.dart';
+import '../../binance_api.dart';
 
 class BinanceSpot extends Binance {
   BinanceSpot({
@@ -20,149 +15,142 @@ class BinanceSpot extends Binance {
         path: 'api/v3/exchangeInfo',
         securityType: SecurityType.NONE,
         type: RequestType.GET,
-      ).then((r) => SpotExchangeInfo.fromMap(r));
+      ).then((r) => SpotExchangeInfo.fromMap(r as Map));
 
-  Future<double> avgPrice({@required String symbol}) => sendRequest(
+  Future<double> avgPrice(String symbol) => sendRequest(
         path: 'api/v3/avgPrice',
         securityType: SecurityType.NONE,
         type: RequestType.GET,
         params: {'symbol': symbol},
-      ).then((r) => double.parse(r['price']));
+      ).then((r) => double.parse(r['price'] as String? ?? ''));
 
-  Future<Order> queryOrder({
-    @required String symbol,
-    int orderId,
-    int origClientOrderId,
-    int recvWindow,
-  }) {
-    Map<String, String> params = {'symbol': symbol};
-    if (orderId != null) params['orderId'] = orderId.toString();
-    if (origClientOrderId != null) params['origClientOrderId'] = origClientOrderId.toString();
-    if (recvWindow != null) params['recvWindow'] = recvWindow.toString();
-    return sendRequest(
+  Future<Order> queryOrder(
+    String symbol, {
+    int? orderId,
+    int? origClientOrderId,
+    int? recvWindow,
+  }) async {
+    final params = {
+      'symbol': symbol,
+      if (orderId != null) 'orderId': '$orderId',
+      if (origClientOrderId != null) 'origClientOrderId': '$origClientOrderId',
+      if (recvWindow != null) 'recvWindow': '$recvWindow',
+    };
+    final r = await sendRequest(
       path: 'api/v3/order',
       securityType: SecurityType.USER_DATA,
       type: RequestType.GET,
       timestampNeeded: true,
       params: params,
-    ).then((m) => Order.fromMap(m));
+    ) as Map;
+    return Order.fromMap(r);
   }
 
-  Future<List<Order>> allOpenOrders({
-    String symbol,
-    int recvWindow,
-  }) {
-    Map<String, String> params = {};
-    if (symbol != null) params['symbol'] = symbol;
-    if (recvWindow != null) params['recvWindow'] = recvWindow.toString();
-    return sendRequest(
+  Future<List<Order>> allOpenOrders({String? symbol, int? recvWindow}) async {
+    final params = {
+      if (symbol != null) 'symbol': symbol,
+      if (recvWindow != null) 'recvWindow': '$recvWindow',
+    };
+    final m = await sendRequest(
       path: 'api/v3/openOrders',
       securityType: SecurityType.USER_DATA,
       type: RequestType.GET,
       timestampNeeded: true,
       params: params,
-    ).then((m) => List<Order>.from(m.map((o) => Order.fromMap(o))));
+    );
+    return List<Order>.from((m as List).map((o) => Order.fromMap(o as Map)));
   }
 
-  Future<List<Order>> allOrders({
-    @required String symbol,
-    int orderId,
-    int startTime,
-    int endTime,
-    int limit,
-    int recvWindow,
-  }) {
-    Map<String, String> params = {'symbol': symbol};
-    if (orderId != null) params['orderId'] = orderId.toString();
-    if (startTime != null) params['startTime'] = startTime.toString();
-    if (endTime != null) params['endTime'] = endTime.toString();
-    if (limit != null) params['limit'] = limit.toString();
-    if (recvWindow != null) params['recvWindow'] = recvWindow.toString();
-    return sendRequest(
+  Future<List<Order>> allOrders(
+    String symbol, {
+    int? orderId,
+    int? startTime,
+    int? endTime,
+    int? limit,
+    int? recvWindow,
+  }) async {
+    final params = {
+      'symbol': symbol,
+      if (orderId != null) 'orderId': '$orderId',
+      if (startTime != null) 'startTime': '$startTime',
+      if (endTime != null) 'endTime': '$endTime',
+      if (limit != null) 'limit': '$limit',
+      if (recvWindow != null) 'recvWindow': '$recvWindow',
+    };
+    final r = await sendRequest(
       path: 'api/v3/allOrders',
       securityType: SecurityType.USER_DATA,
       type: RequestType.GET,
       timestampNeeded: true,
       params: params,
-    ).then((m) => List<Order>.from(m.map((o) => Order.fromMap(o))));
+    );
+    return List<Order>.from((r as List).map((o) => Order.fromMap(o as Map)));
   }
 
-  Future<SpotAccountInfo> accountInfo({int recvWindow}) {
-    Map<String, String> params = {};
-    if (recvWindow != null) params['recvWindow'] = recvWindow.toString();
-    return sendRequest(
+  Future<SpotAccountInfo> accountInfo({int? recvWindow}) async {
+    final params = {
+      if (recvWindow != null) 'recvWindow': '$recvWindow',
+    };
+    final m = await sendRequest(
       path: 'api/v3/account',
       securityType: SecurityType.USER_DATA,
       type: RequestType.GET,
       timestampNeeded: true,
       params: params,
-    ).then((m) => SpotAccountInfo.fromMap(m));
+    ) as Map;
+    return SpotAccountInfo.fromMap(m);
   }
 
-  Future<List<Trade>> tradeList({
-    @required String symbol,
-    int startTime,
-    int endTime,
-    int fromId,
-    int limit,
-    int recvWindow,
-  }) {
-    Map<String, String> params = {'symbol': symbol};
-    if (startTime != null) params['startTime'] = startTime.toString();
-    if (endTime != null) params['endTime'] = endTime.toString();
-    if (fromId != null) params['fromId'] = fromId.toString();
-    if (limit != null) params['limit'] = limit.toString();
-    if (recvWindow != null) params['recvWindow'] = recvWindow.toString();
+  Future<List<Trade>> tradeList(
+    String symbol, {
+    int? startTime,
+    int? endTime,
+    int? fromId,
+    int? limit,
+    int? recvWindow,
+  }) async {
+    final params = {
+      'symbol': symbol,
+      if (startTime != null) 'startTime': '$startTime',
+      if (endTime != null) 'endTime': '$endTime',
+      if (fromId != null) 'fromId': '$fromId',
+      if (limit != null) 'limit': '$limit',
+      if (recvWindow != null) 'recvWindow': '$recvWindow',
+    };
     return sendRequest(
       path: 'api/v3/myTrades',
       securityType: SecurityType.USER_DATA,
       type: RequestType.GET,
       timestampNeeded: true,
       params: params,
-    ).then((m) => List<Trade>.from(m.map((o) => Trade.fromMap(o))));
+    ).then(
+      (m) => List<Trade>.from(
+        (m as List).map((o) => Trade.fromMap(o as Map)),
+      ),
+    );
   }
 
-  Future<AccountSnapshot> accountSnapshot({
-    @required String type,
-    int startTime,
-    int endTime,
-    int limit,
-    int recvWindow,
+  Future<AccountSnapshot> accountSnapshot(
+    String type, {
+    int? startTime,
+    int? endTime,
+    int? limit,
+    int? recvWindow,
   }) async {
-    Map<String, String> params = {'type': type};
-    if (startTime != null) params['startTime'] = startTime.toString();
-    if (endTime != null) params['endTime'] = endTime.toString();
-    if (limit != null) params['limit'] = limit.toString();
-    if (recvWindow != null) params['recvWindow'] = recvWindow.toString();
-    AccountSnapshot snap;
-    dynamic a;
-    try {
-      a = await sendRequest(
-        path: 'sapi/v1/accountSnapshot',
-        securityType: SecurityType.USER_DATA,
-        type: RequestType.GET,
-        timestampNeeded: true,
-        params: params,
-      );
-      snap = AccountSnapshot.fromMap(a);
-    } catch (e) {
-      print("hello");
-      print(a);
-    }
-    return snap;
-    // return sendRequest(
-    //   path: 'sapi/v1/accountSnapshot',
-    //   securityType: SecurityType.USER_DATA,
-    //   type: RequestType.GET,
-    //   timestampNeeded: true,
-    //   params: params,
-    //   // ).then((m) => AccountSnapshot.fromMap(m));
-    // ).then<AccountSnapshot>((m) => AccountSnapshot.fromMap(m)).catchError(
-    //   (err) {
-    //     print(m);
-    //     return "${err.code} : ${err.message}";
-    //   },
-    //   test: (e) => e is BinanceApiException,
-    // );
+    final params = {
+      'type': type,
+      if (startTime != null) 'startTime': '$startTime',
+      if (endTime != null) 'endTime': '$endTime',
+      if (limit != null) 'limit': '$limit',
+      if (recvWindow != null) 'recvWindow': '$recvWindow',
+    };
+    final a = await sendRequest(
+      path: 'sapi/v1/accountSnapshot',
+      securityType: SecurityType.USER_DATA,
+      type: RequestType.GET,
+      timestampNeeded: true,
+      params: params,
+    ) as Map;
+    return AccountSnapshot.fromMap(a);
   }
 }

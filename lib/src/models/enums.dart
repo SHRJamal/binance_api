@@ -8,7 +8,7 @@ enum SymbolStatus {
   BREAK,
 }
 
-Map<SymbolStatus, String> symbolStatusToStr = {
+final symbolStatusToStr = <SymbolStatus, String>{
   SymbolStatus.PRE_TRADING: "PRE_TRADING",
   SymbolStatus.TRADING: "TRADING",
   SymbolStatus.POST_TRADING: "POST_TRADING",
@@ -18,7 +18,7 @@ Map<SymbolStatus, String> symbolStatusToStr = {
   SymbolStatus.BREAK: "BREAK",
 };
 
-Map<String, SymbolStatus> symbolStatusFromStr = {
+final symbolStatusFromStr = <String, SymbolStatus>{
   "PRE_TRADING": SymbolStatus.PRE_TRADING,
   "TRADING": SymbolStatus.TRADING,
   "POST_TRADING": SymbolStatus.POST_TRADING,
@@ -34,13 +34,13 @@ enum OcoStatus {
   ALL_DONE,
 }
 
-Map<OcoStatus, String> ocoStatusToStr = {
+final ocoStatusToStr = <OcoStatus, String>{
   OcoStatus.RESPONSE: "RESPONSE",
   OcoStatus.EXEC_STARTED: "EXEC_STARTED",
   OcoStatus.ALL_DONE: "ALL_DONE",
 };
 
-Map<String, OcoStatus> ocoStatusFromStr = {
+final ocoStatusFromStr = <String, OcoStatus>{
   "RESPONSE": OcoStatus.RESPONSE,
   "EXEC_STARTED": OcoStatus.EXEC_STARTED,
   "ALL_DONE": OcoStatus.ALL_DONE,
@@ -52,13 +52,13 @@ enum OcoOrderStatus {
   REJECT,
 }
 
-Map<OcoOrderStatus, String> ocoOrderStatusToStr = {
+final ocoOrderStatusToStr = <OcoOrderStatus, String>{
   OcoOrderStatus.EXECUTING: "EXECUTING",
   OcoOrderStatus.ALL_DONE: "ALL_DONE",
   OcoOrderStatus.REJECT: "REJECT",
 };
 
-Map<String, OcoOrderStatus> ocoOrderStatusFromStr = {
+final ocoOrderStatusFromStr = <String, OcoOrderStatus>{
   "EXECUTING": OcoOrderStatus.EXECUTING,
   "ALL_DONE": OcoOrderStatus.ALL_DONE,
   "REJECT": OcoOrderStatus.REJECT,
@@ -74,7 +74,7 @@ enum OrderType {
   LIMIT_MAKER,
 }
 
-Map<OrderType, String> orderTypeToStr = {
+final orderTypeToStr = <OrderType, String>{
   OrderType.LIMIT: "LIMIT",
   OrderType.MARKET: "MARKET",
   OrderType.STOP_LOSS: "STOP_LOSS",
@@ -84,7 +84,7 @@ Map<OrderType, String> orderTypeToStr = {
   OrderType.LIMIT_MAKER: "LIMIT_MAKER",
 };
 
-Map<String, OrderType> orderTypeFromStr = {
+final orderTypeFromStr = <String, OrderType>{
   "LIMIT": OrderType.LIMIT,
   "MARKET": OrderType.MARKET,
   "STOP_LOSS": OrderType.STOP_LOSS,

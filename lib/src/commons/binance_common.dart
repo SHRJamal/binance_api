@@ -1,10 +1,9 @@
-import 'dart:io';
 import 'dart:convert' as convert;
+import 'dart:io';
 
 import 'package:convert/convert.dart';
-import 'package:flutter/material.dart' hide Interval;
-import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
+import 'package:http/http.dart' as http;
 
 import 'common_classes.dart';
 import 'common_enums.dart';
@@ -13,38 +12,43 @@ import 'exceptions.dart';
 abstract class Binance {
   final String endpoint;
   final String prefix;
-  String apiKey;
-  String apiSecret;
+  final String apiKey;
+  final String apiSecret;
 
-  Binance({@required this.endpoint, @required this.prefix, this.apiKey = "", this.apiSecret = ""});
+  Binance({
+    required this.endpoint,
+    required this.prefix,
+    this.apiKey = "",
+    this.apiSecret = "",
+  });
 
   Future<dynamic> sendRequest({
-    @required String path,
-    @required SecurityType securityType,
-    @required RequestType type,
+    required String path,
+    required SecurityType securityType,
+    required RequestType type,
     bool timestampNeeded = false,
-    Map<String, String> params,
+    Map<String, String> params = const {},
   }) async {
-    params ??= {};
-    if (timestampNeeded) params['timestamp'] = (DateTime.now().millisecondsSinceEpoch).toString();
+    if (timestampNeeded) {
+      params['timestamp'] = (DateTime.now().millisecondsSinceEpoch).toString();
+    }
 
-    if (securityType == SecurityType.TRADE || securityType == SecurityType.USER_DATA) {
-      var tempUri = Uri.https('', '', params);
-      String queryParams = tempUri.toString().substring(7);
-      List<int> messageBytes = convert.utf8.encode(queryParams);
-      List<int> key = convert.utf8.encode(apiSecret);
-      Hmac hmac = new Hmac(sha256, key);
-      Digest digest = hmac.convert(messageBytes);
-      String signature = hex.encode(digest.bytes);
+    if (securityType == SecurityType.TRADE ||
+        securityType == SecurityType.USER_DATA) {
+      final queryParams = Uri.https('', '', params).toString().substring(7);
+      final messageBytes = convert.utf8.encode(queryParams);
+      final hmac = Hmac(sha256, convert.utf8.encode(apiSecret));
+      final signature = hex.encode(hmac.convert(messageBytes).bytes);
       params['signature'] = signature;
     }
 
-    Map<String, String> header = {};
-    header[HttpHeaders.contentTypeHeader] = "application/x-www-form-urlencoded";
-    if (securityType != SecurityType.NONE) header["X-MBX-APIKEY"] = apiKey;
+    final header = <String, String>{
+      HttpHeaders.contentTypeHeader: "application/x-www-form-urlencoded",
+      if (securityType != SecurityType.NONE) "X-MBX-APIKEY": apiKey
+    };
 
-    final uri = Uri.https(endpoint, '$path', params);
-    http.Response response;
+    final uri = Uri.https(endpoint, path, params);
+    http.Response? response;
 
     switch (type) {
       case RequestType.GET:
@@ -71,14 +75,15 @@ abstract class Binance {
       default:
     }
 
-    final result = convert.jsonDecode(response.body);
-
+    final result = convert.jsonDecode(response?.body ?? '');
     if (result is Map) {
       if (result.containsKey("code") && result['code'] != 200) {
-        throw BinanceApiException(result["msg"], result["code"]);
+        throw BinanceApiException(
+          result["msg"] as String? ?? '',
+          result["code"] as int? ?? 404,
+        );
       }
     }
-    print("is oke");
 
     return result;
   }
@@ -89,85 +94,111 @@ abstract class Binance {
         type: RequestType.GET,
       ).then((r) => true);
 
-  Future<int> serverTime() => sendRequest(
-        path: '$prefix/time',
-        securityType: SecurityType.NONE,
-        type: RequestType.GET,
-      ).then((r) => r['serverTime']);
+  Future<int> serverTime() async {
+    final res = await sendRequest(
+      path: '$prefix/time',
+      securityType: SecurityType.NONE,
+      type: RequestType.GET,
+    );
+    return res['serverTime'] as int;
+  }
 
-  Future<OrderBook> orderBook({@required String symbol, int limit}) {
-    Map<String, String> params = {"symbol": symbol};
+  Future<OrderBook> orderBook(String symbol, {int? limit}) async {
+    final params = {"symbol": symbol};
     if (limit != null) params['limit'] = limit.toString();
-    return sendRequest(
+    final res = await sendRequest(
       path: '$prefix/depth',
       securityType: SecurityType.NONE,
       type: RequestType.GET,
       params: params,
-    ).then((r) => OrderBook.fromMap(r));
+    );
+    return OrderBook.fromMap(res as Map);
   }
 
-  Future<List<PublicTrade>> tradesList({@required String symbol, int limit}) {
-    Map<String, String> params = {"symbol": symbol};
-    if (limit != null) params['limit'] = limit.toString();
+  Future<List<PublicTrade>> tradesList(String symbol, {int? limit}) async {
+    final params = {
+      "symbol": symbol,
+      if (limit != null) 'limit': '$limit',
+    };
     return sendRequest(
       path: '$prefix/trades',
       securityType: SecurityType.NONE,
       type: RequestType.GET,
       params: params,
-    ).then((r) => List<PublicTrade>.from(r.map((t) => PublicTrade.fromMap(t))));
+    ).then(
+      (r) => List<PublicTrade>.from(
+        (r as List).map((t) => PublicTrade.fromMap(t as Map)),
+      ),
+    );
   }
 
-  Future<List<PublicTrade>> historicalTrades({@required String symbol, int limit, int fromId}) {
-    Map<String, String> params = {"symbol": symbol};
-    if (limit != null) params['limit'] = limit.toString();
-    if (fromId != null) params['fromId'] = fromId.toString();
-    return sendRequest(
+  Future<List<PublicTrade>> historicalTrades(String symbol,
+      {int? limit, int? fromId}) async {
+    final params = {
+      "symbol": symbol,
+      if (limit != null) 'limit': '$limit',
+      if (fromId != null) 'fromId': '$fromId',
+    };
+    final r = await sendRequest(
       path: '$prefix/historicalTrades',
       securityType: SecurityType.MARKET_DATA,
       type: RequestType.GET,
       params: params,
-    ).then((r) => List<PublicTrade>.from(r.map((t) => PublicTrade.fromMap(t))));
+    ) as Map;
+    return List<PublicTrade>.from(
+      r.values.map(
+        (t) => PublicTrade.fromMap(t as Map),
+      ),
+    );
   }
 
-  Future<List<AggregatedTrade>> aggregatedTrades({
-    @required String symbol,
-    int fromId,
-    int startTime,
-    int endTime,
-    int limit,
-  }) {
-    Map<String, String> params = {"symbol": symbol};
-    if (fromId != null) params['fromId'] = fromId.toString();
-    if (startTime != null) params['startTime'] = startTime.toString();
-    if (endTime != null) params['endTime'] = endTime.toString();
-    if (limit != null) params['limit'] = limit.toString();
-    return sendRequest(
+  Future<List<AggregatedTrade>> aggregatedTrades(
+    String symbol, {
+    int? fromId,
+    int? startTime,
+    int? endTime,
+    int? limit,
+  }) async {
+    final params = {
+      "symbol": symbol,
+      if (fromId != null) 'fromId': fromId.toString(),
+      if (startTime != null) 'startTime': startTime.toString(),
+      if (endTime != null) 'endTime': endTime.toString(),
+      if (limit != null) 'limit': limit.toString(),
+    };
+    final r = await sendRequest(
       path: '$prefix/aggTrades',
       securityType: SecurityType.NONE,
       type: RequestType.GET,
       params: params,
-    ).then((r) => List<AggregatedTrade>.from(r.map((t) => AggregatedTrade.fromMap(t))));
+    ) as Map;
+    return List<AggregatedTrade>.from(r.values.map(
+      (t) => AggregatedTrade.fromMap(t as Map),
+    ));
   }
 
-  Future<List<Kline>> candlestickData({
-    @required String symbol,
-    @required Interval interval,
-    int startTime,
-    int endTime,
-    int limit,
-  }) {
-    Map<String, String> params = {
+  Future<List<Kline>> candlestickData(
+    String symbol,
+    Interval interval, {
+    int? startTime,
+    int? endTime,
+    int? limit,
+  }) async {
+    final params = {
       'symbol': symbol,
-      'interval': intervalToStr[interval],
+      'interval': intervalToStr[interval] ?? '',
+      if (startTime != null) 'startTime': '$startTime',
+      if (endTime != null) 'endTime': '$endTime',
+      if (limit != null) 'limit': '$limit',
     };
-    if (startTime != null) params['startTime'] = startTime.toString();
-    if (endTime != null) params['endTime'] = endTime.toString();
-    if (limit != null) params['limit'] = limit.toString();
-    return sendRequest(
+    final r = await sendRequest(
       path: '$prefix/klines',
       securityType: SecurityType.NONE,
       type: RequestType.GET,
       params: params,
-    ).then((r) => List<Kline>.from(r.map((t) => Kline.fromList(t))));
+    ) as Map;
+    return List<Kline>.from(r.values.map(
+      (t) => Kline.fromList(t as List),
+    ));
   }
 }
