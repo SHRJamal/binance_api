@@ -21,7 +21,8 @@ class CoinBalance extends Equatable {
   String freeUSD(double avrPrice) => (free * avrPrice).toStringAsFixed(2);
   String lockedUSD(double avrPrice) => (locked * avrPrice).toStringAsFixed(2);
   String get qty => (free + locked).toStringAsFixed(2);
-  String qtyQuote(double avrPrice) => ((free + locked) * avrPrice).toStringAsFixed(2);
+  String qtyQuote(double avrPrice) =>
+      ((free + locked) * avrPrice).toStringAsFixed(2);
   @override
   bool get stringify => true;
 

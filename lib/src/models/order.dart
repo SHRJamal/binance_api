@@ -1,4 +1,3 @@
-
 import '../../binance_api.dart';
 
 class Order {
@@ -43,5 +42,3 @@ class Order {
         origQuoteOrderQty =
             double.parse(m['origQuoteOrderQty'] as String? ?? '0');
 }
-
-

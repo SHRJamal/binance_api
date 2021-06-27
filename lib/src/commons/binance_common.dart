@@ -35,17 +35,20 @@ abstract class Binance {
 
     if (securityType == SecurityType.TRADE ||
         securityType == SecurityType.USER_DATA) {
-      final queryParams = Uri.https('', '', params).toString().substring(7);
+      final tempUri = Uri.https('', '', params);
+      final queryParams = tempUri.toString().substring(7);
       final messageBytes = convert.utf8.encode(queryParams);
-      final hmac = Hmac(sha256, convert.utf8.encode(apiSecret));
-      final signature = hex.encode(hmac.convert(messageBytes).bytes);
+      final key = convert.utf8.encode(apiSecret);
+      final hmac = Hmac(sha256, key);
+      final digest = hmac.convert(messageBytes);
+      final signature = hex.encode(digest.bytes);
       params['signature'] = signature;
     }
 
     final header = <String, String>{
-      HttpHeaders.contentTypeHeader: "application/x-www-form-urlencoded",
-      if (securityType != SecurityType.NONE) "X-MBX-APIKEY": apiKey
+      HttpHeaders.contentTypeHeader: "application/x-www-form-urlencoded"
     };
+    if (securityType != SecurityType.NONE) header["X-MBX-APIKEY"] = apiKey;
 
     final uri = Uri.https(endpoint, path, params);
     http.Response? response;

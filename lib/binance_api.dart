@@ -9,16 +9,16 @@
 
 library binance_api;
 
-export 'src/binance.dart';
-export 'src/commons/binance_common.dart';
-export 'src/commons/binance_common.dart';
-export 'src/commons/common_classes.dart';
-export 'src/commons/common_enums.dart';
-export 'src/models/account.dart';
-export 'src/models/binance.dart';
-export 'src/models/enums.dart';
-export 'src/models/exchange.dart';
-export 'src/models/order.dart';
-export 'src/models/snapshot.dart';
-export 'src/models/symbol.dart';
-export 'src/models/trade.dart';
+export '../src/binance.dart';
+export '../src/commons/binance_common.dart';
+export '../src/commons/binance_common.dart';
+export '../src/commons/common_classes.dart';
+export '../src/commons/common_enums.dart';
+export '../src/models/account.dart';
+export '../src/models/binance.dart';
+export '../src/models/enums.dart';
+export '../src/models/exchange.dart';
+export '../src/models/order.dart';
+export '../src/models/snapshot.dart';
+export '../src/models/symbol.dart';
+export '../src/models/trade.dart';
